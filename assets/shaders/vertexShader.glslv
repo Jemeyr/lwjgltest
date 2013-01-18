@@ -1,7 +1,17 @@
 #version 150
 
-in vec2 position;
+uniform mat4 viewMatrix, projMatrix;
+
+in vec3 position;
+in vec3 color;
+
+out vec3 colorPS;
+
 void main() {
-	gl_Position = vec4( position.x, position.y, 0.0, 1.0 );
+	vec4 pos = vec4(position.xyz, 1.0);
+
+	colorPS = color;
+	gl_Position =   projMatrix * viewMatrix * pos;
+
 }
 

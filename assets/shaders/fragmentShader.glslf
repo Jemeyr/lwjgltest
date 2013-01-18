@@ -2,10 +2,12 @@
 
 out vec4 outColor;
 
-uniform float triGreen;
+in vec3 colorPS;
 
 void main() 
 {
-	outColor = vec4( 0.0, triGreen, 0.0, 1.0 );
-};
+
+	outColor = vec4(colorPS, 1.0);
+
+}
 
