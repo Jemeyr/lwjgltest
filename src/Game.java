@@ -5,7 +5,10 @@ import org.lwjgl.util.vector.Vector3f;
 
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -18,8 +21,14 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL12.*;
+import static org.lwjgl.opengl.GL13.*;
+
 
 import org.lwjgl.input.Keyboard;
+
+import de.matthiasmann.twl.utils.PNGDecoder;
+import de.matthiasmann.twl.utils.PNGDecoder.Format;
 
 public class Game{
 	
@@ -199,7 +208,7 @@ public class Game{
         }
         
         glEnable(GL_DEPTH_TEST);
-
+        
         //clear to black
         glClearColor(0f, 0f, 0f, 1f);
 
@@ -215,39 +224,40 @@ public class Game{
                 0.0f,  1.0f,  -1.0f,
                 
                 
-                
                 		};
+        
+        int elements[] = {
+        		0,1,2,
+        		3,4,5,
+        		0,1,5,
+        		3,4,2
+        };
+        
+        float tcoords[] = {
+        		0.0f, 0.0f,
+        		0.5f, 1.0f,
+        		1.0f, 0.0f,
+
+        		0.5f, 1.0f,
+        		0.0f, 0.0f,
+        		1.0f, 0.0f,
+        		
+        };
         
         float colors[] = {
 
-        		0.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 
+        		1.0f, 1.0f, 0.0f,
+                0.2f, 0.2f, 0.2f,
+                1.0f, 1.0f, 1.0f, 
 
+        		1.0f, 0.0f, 0.0f,
         		0.0f, 1.0f, 0.0f,
-        		0.0f, 1.0f, 0.0f,
-        		0.0f, 1.0f, 0.0f,
+        		0.0f, 0.0f, 1.0f,
                 
         };
         
-        FloatBuffer vbuff = genFloatBuffer(vertices);
-        FloatBuffer cbuff = genFloatBuffer(colors);
         
-        int vao = glGenVertexArrays();
-        
-        int vertBO = glGenBuffers();
-        int colorBO = glGenBuffers();
-        
-        glBindVertexArray(vao);
-        
-        glBindBuffer(GL_ARRAY_BUFFER, vertBO);
-        glBufferData(GL_ARRAY_BUFFER, vbuff , GL_STATIC_DRAW);
-        
-        glBindBuffer(GL_ARRAY_BUFFER, colorBO);
-        glBufferData(GL_ARRAY_BUFFER, cbuff , GL_STATIC_DRAW);
-        
-        
-        
+        //shader stuff
         int fs = 0;
         int vs = 0;
         
@@ -278,11 +288,87 @@ public class Game{
         glLinkProgram(shaderProgram);
         glUseProgram(shaderProgram);
         
+        //end shader stuff
+        
+        
+        
+        
+        
+        int vao = glGenVertexArrays();
+        
+        glBindVertexArray(vao);
+        
+        
+        
+        //texture stuff
+        
+        //Let's load a texture here.
+        InputStream is = null;
+        ByteBuffer buf = null;
+        
+        try{
+        	is = new FileInputStream("assets/textures/ryan.png");
+        	PNGDecoder pd = new PNGDecoder(is);
+
+        	buf = ByteBuffer.allocateDirect(4*pd.getWidth()*pd.getHeight());
+        	pd.decode(buf, pd.getWidth()*4, Format.RGBA);
+        	buf.flip();
+
+        	
+        }catch (Exception e)
+        {
+        	System.out.println("error " + e);
+        }
+        
+        
+        int texO = glGenTextures();
+        
+        glActiveTexture(0);
+        glBindTexture(GL_TEXTURE_2D, texO);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        
+        
+        glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+        
+        
+        
+        //done that stuff 
+        FloatBuffer vbuff = genFloatBuffer(vertices);
+        FloatBuffer cbuff = genFloatBuffer(colors);
+        FloatBuffer tcbuff = genFloatBuffer(tcoords);
+        IntBuffer ebuff = BufferUtils.createIntBuffer(elements.length);
+        ebuff.put(elements);
+        ebuff.rewind();
+        
+        int vertBO = glGenBuffers();
+        int colorBO = glGenBuffers();
+        int tCoordBO = glGenBuffers();
+        int elemBO = glGenBuffers();
+        
+        glBindBuffer(GL_ARRAY_BUFFER, vertBO);
+        glBufferData(GL_ARRAY_BUFFER, vbuff , GL_STATIC_DRAW);
+        
+        glBindBuffer(GL_ARRAY_BUFFER, colorBO);
+        glBufferData(GL_ARRAY_BUFFER, cbuff , GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, tCoordBO);
+        glBufferData(GL_ARRAY_BUFFER, tcbuff, GL_STATIC_DRAW);
+        
+        
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elemBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebuff, GL_STATIC_DRAW);
+        
+        
         
         int positionAttrib = glGetAttribLocation( shaderProgram, "position");
         int colorAttrib = glGetAttribLocation( shaderProgram, "color");
+        int tCoordAttrib = glGetAttribLocation( shaderProgram, "texCoord");
         
-
+        
         glBindBuffer(GL_ARRAY_BUFFER, vertBO);
         glVertexAttribPointer( positionAttrib, 3, GL_FLOAT, false, 0, 0);
         glEnableVertexAttribArray(positionAttrib);
@@ -292,14 +378,20 @@ public class Game{
         glVertexAttribPointer( colorAttrib, 3, GL_FLOAT, false, 0, 0);
         glEnableVertexAttribArray(colorAttrib);
         
+        glBindBuffer(GL_ARRAY_BUFFER, tCoordBO);
+        glVertexAttribPointer( tCoordAttrib, 2, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(tCoordAttrib);
+        
         boolean quit = false;
 
-        
         
         
         int A_viewMat = glGetUniformLocation(shaderProgram, "viewMatrix");
         int A_projMat = glGetUniformLocation(shaderProgram, "projMatrix");
 
+        int A_img = glGetUniformLocation( shaderProgram, "tex");
+        
+        
         //camera yz
         float y = 1f;
         float z = 0f;
@@ -312,18 +404,23 @@ public class Game{
         glUniformMatrix4(A_viewMat, true, genFloatBuffer(view));
         glUniformMatrix4(A_projMat, true, genFloatBuffer(proj));
         
-        
+        //0
+        glUniform1i( A_img, 0);
+
+        //undo the element array buffer
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
         while (!quit) {         
             // Clear the screen.
         	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         	
-        //gluniform sets go here for live update	
-
+        	//gluniform sets go here for live update	
             glUniformMatrix4(A_viewMat, true, genFloatBuffer(buildViewMatrix(new Vector3f(3.0f, y, z), new Vector3f(0.0f, 0.0f, 0.0f))));
         	
         	// Draw code
-        	glDrawArrays(GL_TRIANGLES, 0, vertices.length);
-        	
+        	//glDrawArrays(GL_TRIANGLES, 0, vertices.length);
+        	glDrawElements(GL_TRIANGLES, ebuff);
+            
         	// Update
             Display.update();
             
