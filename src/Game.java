@@ -57,6 +57,8 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import java.lang.Math;
+
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
@@ -435,12 +437,19 @@ public class Game{
         
         
         //camera yz
+        float x = 3f;
         float y = 1f;
         float z = 0f;
         
+        
+        
+        float rot  = 0f;
+        float rad = 3f;
+        
+        
         //generate view and projection matrix here;
         Matrix4f proj = buildProjectionMatrix(90.0f, 640f/480f, 0.01f, 100.0f);
-        Matrix4f view = buildViewMatrix(new Vector3f(3.0f, y, z), new Vector3f(0.0f, 0.0f, 0.0f));
+        Matrix4f view = buildViewMatrix(new Vector3f(rad * (float)Math.cos(rot), y,rad * (float)Math.sin(rot)), new Vector3f(0.0f, 0.0f, 0.0f));
         
         
         glUniformMatrix4(A_viewMat, true, genFloatBuffer(view));
@@ -457,7 +466,7 @@ public class Game{
         	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         	
         	//gluniform sets go here for live update	
-            glUniformMatrix4(A_viewMat, true, genFloatBuffer(buildViewMatrix(new Vector3f(3.0f, y, z), new Vector3f(0.0f, 0.0f, 0.0f))));
+            glUniformMatrix4(A_viewMat, true, genFloatBuffer(buildViewMatrix(new Vector3f(rad * (float)Math.cos(rot), y,rad * (float)Math.sin(rot)), new Vector3f(0.0f, 0.0f, 0.0f))));
         	
         	// Draw code
         	//glDrawArrays(GL_TRIANGLES, 0, vertices.length);
@@ -468,22 +477,22 @@ public class Game{
             
             if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT))
             {
-            	z += 0.01f;
+            	rot += 0.01f;
             }
             
             if(Keyboard.isKeyDown(Keyboard.KEY_LEFT))
             {
-            	z -= 0.01f;
+            	rot -= 0.01f;
             }
             
             if(Keyboard.isKeyDown(Keyboard.KEY_UP))
             {
-            	y += 0.01f;
+            	rad -= 0.01f;
             }
             
             if(Keyboard.isKeyDown(Keyboard.KEY_DOWN))
             {
-            	y -= 0.01f;
+            	rad += 0.01f;
             }
             
             
