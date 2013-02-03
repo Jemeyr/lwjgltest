@@ -219,8 +219,9 @@ public class Model {
 		counter = 0;
 		for(Vector2f v : output_texCoords)
 		{
-			this.texCoords[counter++] = -v.x;
-			this.texCoords[counter++] = -v.y;	
+			System.out.println(v.x + ", " + v.y);
+			this.texCoords[counter++] = v.x;
+			this.texCoords[counter++] = 1.0f - v.y;	
 		}
 		
 		counter = 0;

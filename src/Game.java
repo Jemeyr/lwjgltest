@@ -259,10 +259,15 @@ public class Game{
         
         float normals[] = {};
         
-        Model monkey = new Model("assets/models/triforce.obj");
+        String textureFileName = "assets/textures/slint.png";
+        String modelFileName = "assets/models/spear.obj";
+        
+        
+        Model monkey = new Model(modelFileName);
         vertices = monkey.vertices;
         tcoords = monkey.texCoords;
         normals = monkey.normals;
+        
 
         elements = monkey.elements;
         
@@ -314,7 +319,7 @@ public class Game{
         ByteBuffer buf = null;
         
         try{
-        	is = new FileInputStream("assets/textures/triforce.png");
+        	is = new FileInputStream(textureFileName);
         	PNGDecoder pd = new PNGDecoder(is);
         	
         	buf = ByteBuffer.allocateDirect(4*pd.getWidth()*pd.getHeight());
@@ -386,6 +391,8 @@ public class Game{
         glBindBuffer(GL_ARRAY_BUFFER, tCoordBO);
         glVertexAttribPointer( tCoordAttrib, 2, GL_FLOAT, false, 0, 0);
         glEnableVertexAttribArray(tCoordAttrib);
+        
+        
 
         
 
@@ -438,7 +445,7 @@ public class Game{
 
             
             
-            glUniform3f(A_cam, rad * (float)Math.sin(rot/16), 0,rad * (float)Math.cos(rot/16));
+            glUniform3f(A_cam, rad * (float)Math.sin(rot/16), rad,rad * (float)Math.cos(rot/16));
             
         	// Draw code
         	//glDrawArrays(GL_TRIANGLES, 0, vertices.length);

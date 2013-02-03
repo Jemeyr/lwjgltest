@@ -1,21 +1,19 @@
 #version 150
 
 uniform mat4 viewMatrix, projMatrix;
-uniform vec3 cam;
 
 in vec3 position;
 in vec3 normal;
 in vec2 texCoord;
 
+smooth out vec3 norm;
 out vec2 texCoordPS;
-smooth out float light;
 
 void main() {
-	vec4 pos = vec4(position.xyz, 1.0);
 
-	light = 0.1 + abs(dot(normal, normalize(cam)));
+	vec4 pos = vec4(position.xyz, 1.0);
+	norm = normal;
 
 	texCoordPS = texCoord;
 	gl_Position =   projMatrix * viewMatrix * pos;
-
 }
