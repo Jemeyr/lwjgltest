@@ -42,6 +42,7 @@ import static org.lwjgl.opengl.GL20.glGetUniformLocation;
 import static org.lwjgl.opengl.GL20.glLinkProgram;
 import static org.lwjgl.opengl.GL20.glShaderSource;
 import static org.lwjgl.opengl.GL20.glUniform1i;
+import static org.lwjgl.opengl.GL20.glUniform3f;
 import static org.lwjgl.opengl.GL20.glUniformMatrix4;
 import static org.lwjgl.opengl.GL20.glUseProgram;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
@@ -56,8 +57,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-
-import java.lang.Math;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
@@ -200,7 +199,6 @@ public class Game{
 		right.normalise();
 
 		
-		//this seems unnecessary? maybe just has to do with normalisation?
 		Vector3f.cross(right, dir, up);
 		up.normalise();
 		
@@ -253,51 +251,19 @@ public class Game{
         glClearColor(0f, 0f, 0f, 1f);
 
         //some vertices
-        float vertices[] = {
-
-        		 1.0f, -1.0f, -1.0f,
-                -1.0f, -1.0f,  -1.0f,
-                0.0f,  1.0f,  1.0f,
-                
-                1.0f, -1.0f, 1.0f,
-                -1.0f, -1.0f,  1.0f,
-                0.0f,  1.0f,  -1.0f,
-                
-                
-                		};
+        float vertices[] = {};
         
-        int elements[] = {
-        		0,1,2,
-        		3,4,5,
-        		6,7,8,9,10,11,12,13,14
-        		
-        };
+        int elements[] = {};
         
-        float tcoords[] = {
-        		0.0f, 0.0f,
-        		1.0f, 1.0f,
-        		1.0f, 0.0f,
-/*
-        		0.5f, 1.0f,
-        		0.0f, 0.0f,
-        		1.0f, 0.0f,
-        		*/	
-        };
+        float tcoords[] = {};
         
-        float colors[] = {
-/*
-        		1.0f, 1.0f, 0.0f,
-                0.2f, 0.2f, 0.2f,
-                1.0f, 1.0f, 1.0f, 
-
-        		1.0f, 0.0f, 0.0f,
-        		0.0f, 1.0f, 0.0f,
-        		0.0f, 0.0f, 1.0f,*/
-                
-        };
+        float normals[] = {};
         
-        Model monkey = new Model("assets/models/monkey.obj");
+        Model monkey = new Model("assets/models/triforce.obj");
         vertices = monkey.vertices;
+        tcoords = monkey.texCoords;
+        normals = monkey.normals;
+
         elements = monkey.elements;
         
         
@@ -335,9 +301,6 @@ public class Game{
         //end shader stuff
         
         
-        
-        
-        
         int vao = glGenVertexArrays();
         
         glBindVertexArray(vao);
@@ -351,9 +314,9 @@ public class Game{
         ByteBuffer buf = null;
         
         try{
-        	is = new FileInputStream("assets/textures/ryan.png");
+        	is = new FileInputStream("assets/textures/triforce.png");
         	PNGDecoder pd = new PNGDecoder(is);
-
+        	
         	buf = ByteBuffer.allocateDirect(4*pd.getWidth()*pd.getHeight());
         	pd.decode(buf, pd.getWidth()*4, Format.RGBA);
         	buf.flip();
@@ -376,55 +339,59 @@ public class Game{
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         
         
-        glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+        glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
         
         
         
         //done that stuff 
         FloatBuffer vbuff = genFloatBuffer(vertices);
-        FloatBuffer cbuff = genFloatBuffer(colors);
+        FloatBuffer nbuff = genFloatBuffer(normals);
         FloatBuffer tcbuff = genFloatBuffer(tcoords);
+        
         IntBuffer ebuff = BufferUtils.createIntBuffer(elements.length);
         ebuff.put(elements);
         ebuff.rewind();
         
         int vertBO = glGenBuffers();
-        int colorBO = glGenBuffers();
+        int normalBO = glGenBuffers();
         int tCoordBO = glGenBuffers();
         int elemBO = glGenBuffers();
         
         glBindBuffer(GL_ARRAY_BUFFER, vertBO);
         glBufferData(GL_ARRAY_BUFFER, vbuff , GL_STATIC_DRAW);
         
-        glBindBuffer(GL_ARRAY_BUFFER, colorBO);
-        glBufferData(GL_ARRAY_BUFFER, cbuff , GL_STATIC_DRAW);
-
         glBindBuffer(GL_ARRAY_BUFFER, tCoordBO);
         glBufferData(GL_ARRAY_BUFFER, tcbuff, GL_STATIC_DRAW);
         
-        
+        glBindBuffer(GL_ARRAY_BUFFER, normalBO);
+        glBufferData(GL_ARRAY_BUFFER, nbuff , GL_STATIC_DRAW);
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elemBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebuff, GL_STATIC_DRAW);
         
         
         
         int positionAttrib = glGetAttribLocation( shaderProgram, "position");
-        int colorAttrib = glGetAttribLocation( shaderProgram, "color");
+        int normalAttrib = glGetAttribLocation( shaderProgram, "normal");
         int tCoordAttrib = glGetAttribLocation( shaderProgram, "texCoord");
+        
+        
         
         
         glBindBuffer(GL_ARRAY_BUFFER, vertBO);
         glVertexAttribPointer( positionAttrib, 3, GL_FLOAT, false, 0, 0);
         glEnableVertexAttribArray(positionAttrib);
         
-
-        glBindBuffer(GL_ARRAY_BUFFER, colorBO);
-        glVertexAttribPointer( colorAttrib, 3, GL_FLOAT, false, 0, 0);
-        glEnableVertexAttribArray(colorAttrib);
         
         glBindBuffer(GL_ARRAY_BUFFER, tCoordBO);
         glVertexAttribPointer( tCoordAttrib, 2, GL_FLOAT, false, 0, 0);
         glEnableVertexAttribArray(tCoordAttrib);
+
+        
+
+        glBindBuffer(GL_ARRAY_BUFFER, normalBO);
+        glVertexAttribPointer( normalAttrib, 3, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(normalAttrib);
         
         boolean quit = false;
 
@@ -432,14 +399,15 @@ public class Game{
         
         int A_viewMat = glGetUniformLocation(shaderProgram, "viewMatrix");
         int A_projMat = glGetUniformLocation(shaderProgram, "projMatrix");
+        
+
+        int A_cam = glGetUniformLocation(shaderProgram, "cam");
 
         int A_img = glGetUniformLocation( shaderProgram, "tex");
         
         
         //camera yz
-        float x = 3f;
         float y = 1f;
-        float z = 0f;
         
         
         
@@ -467,7 +435,11 @@ public class Game{
         	
         	//gluniform sets go here for live update	
             glUniformMatrix4(A_viewMat, true, genFloatBuffer(buildViewMatrix(new Vector3f(rad * (float)Math.cos(rot), y,rad * (float)Math.sin(rot)), new Vector3f(0.0f, 0.0f, 0.0f))));
-        	
+
+            
+            
+            glUniform3f(A_cam, rad * (float)Math.sin(rot/16), 0,rad * (float)Math.cos(rot/16));
+            
         	// Draw code
         	//glDrawArrays(GL_TRIANGLES, 0, vertices.length);
         	glDrawElements(GL_TRIANGLES, ebuff);
@@ -487,15 +459,25 @@ public class Game{
             
             if(Keyboard.isKeyDown(Keyboard.KEY_UP))
             {
-            	rad -= 0.01f;
+            	y -= 0.01f;
             }
             
             if(Keyboard.isKeyDown(Keyboard.KEY_DOWN))
             {
-            	rad += 0.01f;
+            	y += 0.01f;
             }
             
-            
+            if(Keyboard.isKeyDown(Keyboard.KEY_RCONTROL))
+    		{
+            	rad -= 0.01f;
+    		}
+        
+            if(Keyboard.isKeyDown(Keyboard.KEY_RSHIFT))
+    		{
+            	rad += 0.01f;
+    		}
+        
+                    
             
             if (Display.isCloseRequested() || Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
                 quit = true;
